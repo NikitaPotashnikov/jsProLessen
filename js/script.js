@@ -193,42 +193,56 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // const div = new MenuCard();
-  // div.render();
+  const getResource = async (url) => {
+    const res = await fetch(url);
 
-  new MenuCard(
-    "img/tabs/vegy.jpg",
-    "vegy",
-    'Меню "Фитнес"',
-    'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
-    9,
-    '.menu .container'
-  ).render(); // это делается тогда, когда этот объект используется только на месте. если мы не положим в кую либо переменную, в будующеем он просто потеряется, на него не существует ссылок. 
+    if (!res.ok) {
+      throw new Error(`Could not fetch ${url}, status: ${res.status}`);
+    }
 
-  new MenuCard(
-    "img/tabs/elite.jpg",
-    "elite",
-    'Меню “Премиум”',
-    'В меню “Премиум” мы используем не только красивый дизайн упаковки, ни качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
-    14,
-    '.menu .container'
-  ).render();
+    return await res.json();
+  };
 
-  new MenuCard(
-    "img/tabs/post.jpg",
-    "post",
-    'Меню "Постное"',
-    'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
-    21,
-    '.menu .container'
-  ).render();
+  getResource('http://localhost:3000/menu')
+    .then(data => {
+      data.forEach(({ img, altimg, title, descr, price }) => {
+        new MenuCard(img, altimg, title, descr, price, '.menu .container').render();
+      });
+    });
+
+  // new MenuCard(
+  //   "img/tabs/vegy.jpg",
+  //   "vegy",
+  //   'Меню "Фитнес"',
+  //   'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
+  //   9,
+  //   '.menu .container'
+  // ).render(); // это делается тогда, когда этот объект используется только на месте. если мы не положим в кую либо переменную, в будующеем он просто потеряется, на него не существует ссылок. 
+
+  // new MenuCard(
+  //   "img/tabs/elite.jpg",
+  //   "elite",
+  //   'Меню “Премиум”',
+  //   'В меню “Премиум” мы используем не только красивый дизайн упаковки, ни качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
+  //   14,
+  //   '.menu .container'
+  // ).render();
+
+  // new MenuCard(
+  //   "img/tabs/post.jpg",
+  //   "post",
+  //   'Меню "Постное"',
+  //   'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
+  //   21,
+  //   '.menu .container'
+  // ).render();
 
   // Forms
 
   const forms = document.querySelectorAll('form');
 
   forms.forEach((item) => {
-    postData(item);
+    bindPostData(item);
   });
 
   const message = {
@@ -237,8 +251,19 @@ window.addEventListener('DOMContentLoaded', () => {
     failure: 'Что-то пошло не так...'
   };
 
+  const postData = async (url, data) => {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: data
+    });
 
-  function postData(form) {
+    return await res.json();
+  };
+
+  function bindPostData(form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
@@ -248,11 +273,7 @@ window.addEventListener('DOMContentLoaded', () => {
         display: block;
         margin: 0 auto;
       `;
-      // form.append(statusMessage);
       form.insertAdjacentElement('afterend', statusMessage);
-
-      // const request = new XMLHttpRequest();
-      // request.open('POST', 'server.php');
 
       // request.setRequestHeader('Content-type', 'multipart/form-data');
       // при создании новой формы, заголовок(setRequestHeader) в XMLHttpReques устанавливать не нужно. Но если мы хоти отправлять JSON файлы на сервер, то заголовок нужен.
@@ -260,20 +281,13 @@ window.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData(form);
 
       // const object = {};
-
       // formData.forEach(function (value, key) {
       //   object[key] = value;
-      // });
+      // });Классический способ перебора объекта в объект
 
-      // const json = JSON.stringify(object);
+      const json = JSON.stringify(Object.fromEntries(formData.entries()));
 
-      fetch('server.php', {
-        method: 'POST',
-        // headers: {
-        //   'Content-type': 'application/json'
-        // },
-        body: formData
-      }).then(data => data.text())
+      postData('http://localhost:3000/requests', json)
         .then(data => {
           console.log(data);
           showThanksModal(message.success);
@@ -283,17 +297,6 @@ window.addEventListener('DOMContentLoaded', () => {
         }).finally(() => {
           form.reset();
         })
-
-      // request.addEventListener('load', () => {
-      //   if (request.status === 200) {
-      //     console.log(request.response);
-      //     showThanksModal(message.success);
-      //     form.reset();
-      //     statusMessage.remove();
-      //   } else {
-      //     showThanksModal(message.failure);
-      //   }
-      // })
     });
   }
 
@@ -321,7 +324,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 4000);
   }
 
-  fetch('http://localhost:3000/menu')
-    .then(data => data.json())
-    .then(res => console.log(res))
+  // fetch('http://localhost:3000/menu')
+  //   .then(data => data.json())
+  //   .then(res => console.log(res))
 });
