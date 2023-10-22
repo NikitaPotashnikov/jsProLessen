@@ -324,7 +324,54 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 4000);
   }
 
-  // fetch('http://localhost:3000/menu')
-  //   .then(data => data.json())
-  //   .then(res => console.log(res))
+  // Slider
+
+  const slides = document.querySelectorAll('.offer__slide'),
+    prevArrowBtn = document.querySelector('.offer__slider-prev'),
+    nextArrowBtn = document.querySelector('.offer__slider-next'),
+    currentNumSlider = document.querySelector('#current'),
+    totalNumSlider = document.querySelector('#total');
+  let slideIndex = 1;
+
+  showSlides(slideIndex);
+
+  if (slides.length < 10) {
+    totalNumSlider.textContent = `0${slides.length}`;
+  } else {
+    totalNumSlider.textContent = slides.length;
+  }
+
+  function showSlides(n) {
+    if (n > slides.length) {
+      slideIndex = 1;
+    }
+
+    if (n < 1) {
+      slideIndex = slides.length;
+    }
+
+    slides.forEach(item => item.classList.add('hide'));
+
+    slides[slideIndex - 1].classList.remove('hide');
+    slides[slideIndex - 1].classList.add('show');
+
+    if (slideIndex < 10) {
+      currentNumSlider.textContent = `0${slideIndex}`;
+    } else {
+      currentNumSlider.textContent = slideIndex;
+    }
+  }
+
+  function plusSlides(n) {
+    showSlides(slideIndex += n);
+
+  }
+
+  prevArrowBtn.addEventListener('click', () => {
+    plusSlides(-1);
+  });
+
+  nextArrowBtn.addEventListener('click', () => {
+    plusSlides(1);
+  });
 });
